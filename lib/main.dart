@@ -94,17 +94,86 @@ class _RootScreenState extends State<RootScreen> {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  Text _buildMessage() {
-    return const Text(
-      'Home: 音声入力と今日のサマリーを\nここに実装していきます。',
-      textAlign: TextAlign.center,
+  Widget _buildSummaryRow({
+    required String label,
+    required String amountText,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        Text(
+          amountText,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSummaryRow(
+              label: '今日の支出',
+              amountText: '¥ 0',
+            ),
+            const SizedBox(height: 12),
+            _buildSummaryRow(
+              label: '今月の支出',
+              amountText: '¥ 0',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMicButton() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            // TODO: ここに音声入力開始処理を実装していきます。
+          },
+          style: ElevatedButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(24),
+          ),
+          child: const Icon(
+            Icons.mic,
+            size: 32,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text('タップして話す'),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Column(
+      children: [
+        _buildSummaryCard(),
+        const Spacer(),
+        _buildMicButton(),
+        const SizedBox(height: 32),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: _buildMessage(),
+    return SafeArea(
+      child: _buildBody(),
     );
   }
 }
