@@ -1,125 +1,341 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/expense_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'models/expense.dart';
+import 'screens/history_screen.dart';
+import 'providers/asset_provider.dart'; 
+import 'screens/assets_screen.dart'; 
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(const VoiceKakeiboApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class VoiceKakeiboApp extends StatelessWidget {
+  const VoiceKakeiboApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ExpenseProvider()..loadExpenses(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AssetProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Voice Kakeibo',
+        theme: _buildAppTheme(),
+        home: const RootScreen(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    );
+  }
+
+  static ThemeData _buildAppTheme() {
+    return ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.indigo,
+      ),
+      useMaterial3: true,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class RootScreen extends StatefulWidget {
+  const RootScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<RootScreen> createState() {
+    return _RootScreenState();
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _RootScreenState extends State<RootScreen> {
+  int _currentIndex = 0;
 
-  void _incrementCounter() {
+  void _onTabTapped(int index) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _currentIndex = index;
     });
+  }
+
+  Widget _buildBody() {
+    if (_currentIndex == 0) {
+      return const HomeScreen();
+    }
+    if (_currentIndex == 1) {
+      return const HistoryScreen();
+    }
+    return const AssetsScreen();
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text('Voice Kakeibo'),
+    );
+  }
+
+  BottomNavigationBar _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: _onTabTapped,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.mic),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.list),
+          label: 'History',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_balance_wallet),
+          label: 'Assets',
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() {
+    return _HomeScreenState();
+  }
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late stt.SpeechToText _speech;
+  bool _isAvailable = false;
+  bool _isListening = false;
+  String _lastWords = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    final speech = stt.SpeechToText();
+    final available = await speech.initialize(
+      onStatus: (status) {
+        debugPrint('Speech status: $status');
+      },
+      onError: (error) {
+        debugPrint('Speech error: $error');
+      },
+      debugLogging: true,
+    );
+
+    setState(() {
+      _speech = speech;
+      _isAvailable = available;
+    });
+
+    debugPrint('Speech initialize available: $available');
+  }
+
+  Future<void> _startListening() async {
+    if (!_isAvailable) {
+      return;
+    }
+    await _speech.listen(
+      localeId: 'ja_JP',
+      onResult: (result) {
+        final words = result.recognizedWords;
+        setState(() {
+          _lastWords = words;
+        });
+        debugPrint('Recognized: $words');
+
+        if (result.finalResult) {
+          _saveExpenseFromText(words);
+        }
+      },
+    );
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  Future<void> _stopListening() async {
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onMicPressed() {
+    if (!_isAvailable) {
+      setState(() {
+        _lastWords = 'このデバイスでは音声認識を利用できません。';
+      });
+      return;
+    }
+
+    if (_isListening) {
+      _stopListening();
+    } else {
+      _startListening();
+    }
+  }
+
+  Widget _buildSummaryRow({
+    required String label,
+    required String amountText,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        Text(
+          amountText,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context) {
+    final provider = Provider.of<ExpenseProvider>(context);
+    final todayTotal = provider.getTodayTotal();
+    final monthTotal = provider.getMonthTotal();
+
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSummaryRow(
+              label: '今日の支出',
+              amountText: '¥ $todayTotal',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            const SizedBox(height: 12),
+            _buildSummaryRow(
+              label: '今月の支出',
+              amountText: '¥ $monthTotal',
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Widget _buildMicButton() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ElevatedButton(
+          onPressed: _onMicPressed,
+          style: ElevatedButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(24),
+          ),
+          child: Icon(
+            _isListening ? Icons.mic : Icons.mic_none,
+            size: 32,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _isListening ? '聞き取り中...' : 'タップして話す',
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _lastWords.isEmpty ? 'まだ何も認識されていません' : _lastWords,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: () {
+            const sampleText = 'テストで500円使った';
+            _saveExpenseFromText(sampleText);
+            setState(() {
+              _lastWords = sampleText;
+            });
+          },
+          child: const Text('テストで500円追加'),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildDebugStatus() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('speech available: $_isAvailable'),
+        Text('listening: $_isListening'),
+      ],
+    );
+  }
+  
+  Widget _buildBody(BuildContext context) {
+    return Column(
+      children: [
+        _buildSummaryCard(context),
+        const Spacer(),
+        _buildMicButton(),
+        const SizedBox(height: 16),
+        _buildDebugStatus(),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: _buildBody(context),
+    );
+  }
+
+    int? _extractAmount(String text) {
+    final regex = RegExp(r'\d+');
+    final match = regex.firstMatch(text);
+    if (match == null) {
+      return null;
+    }
+    final value = int.tryParse(match.group(0)!);
+    return value;
+  }
+
+  void _saveExpenseFromText(String text) {
+    final amount = _extractAmount(text);
+    if (amount == null) {
+      return;
+    }
+
+    final expense = Expense.create(
+      amount: amount,
+      category: '音声入力',
+      memo: text,
+    );
+
+    final provider = Provider.of<ExpenseProvider>(
+      context,
+      listen: false,
+    );
+    provider.addExpense(expense);
   }
 }

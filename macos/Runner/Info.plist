@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+    <string>音声入力で家計簿を記録するためにマイクを使用します。</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>あなたの音声をテキストに変換して家計簿を記録するために使用します。</string>
 </dict>
 </plist>
