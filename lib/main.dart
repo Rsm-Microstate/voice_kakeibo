@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/expense_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'models/expense.dart';
+import 'screens/history_screen.dart';
+import 'providers/asset_provider.dart'; 
+import 'screens/assets_screen.dart'; 
+
 
 void main() {
   runApp(const VoiceKakeiboApp());
@@ -9,14 +17,24 @@ class VoiceKakeiboApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Voice Kakeibo',
-      theme: _buildAppTheme(),
-      home: const RootScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ExpenseProvider()..loadExpenses(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AssetProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Voice Kakeibo',
+        theme: _buildAppTheme(),
+        home: const RootScreen(),
+      ),
     );
   }
 
-  ThemeData _buildAppTheme() {
+  static ThemeData _buildAppTheme() {
     return ThemeData(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Colors.indigo,
@@ -91,8 +109,91 @@ class _RootScreenState extends State<RootScreen> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() {
+    return _HomeScreenState();
+  }
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late stt.SpeechToText _speech;
+  bool _isAvailable = false;
+  bool _isListening = false;
+  String _lastWords = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    final speech = stt.SpeechToText();
+    final available = await speech.initialize(
+      onStatus: (status) {
+        debugPrint('Speech status: $status');
+      },
+      onError: (error) {
+        debugPrint('Speech error: $error');
+      },
+      debugLogging: true,
+    );
+
+    setState(() {
+      _speech = speech;
+      _isAvailable = available;
+    });
+
+    debugPrint('Speech initialize available: $available');
+  }
+
+  Future<void> _startListening() async {
+    if (!_isAvailable) {
+      return;
+    }
+    await _speech.listen(
+      localeId: 'ja_JP',
+      onResult: (result) {
+        final words = result.recognizedWords;
+        setState(() {
+          _lastWords = words;
+        });
+        debugPrint('Recognized: $words');
+
+        if (result.finalResult) {
+          _saveExpenseFromText(words);
+        }
+      },
+    );
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  Future<void> _stopListening() async {
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onMicPressed() {
+    if (!_isAvailable) {
+      setState(() {
+        _lastWords = 'このデバイスでは音声認識を利用できません。';
+      });
+      return;
+    }
+
+    if (_isListening) {
+      _stopListening();
+    } else {
+      _startListening();
+    }
+  }
 
   Widget _buildSummaryRow({
     required String label,
@@ -113,7 +214,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(BuildContext context) {
+    final provider = Provider.of<ExpenseProvider>(context);
+    final todayTotal = provider.getTodayTotal();
+    final monthTotal = provider.getMonthTotal();
+
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -123,12 +228,12 @@ class HomeScreen extends StatelessWidget {
           children: [
             _buildSummaryRow(
               label: '今日の支出',
-              amountText: '¥ 0',
+              amountText: '¥ $todayTotal',
             ),
             const SizedBox(height: 12),
             _buildSummaryRow(
               label: '今月の支出',
-              amountText: '¥ 0',
+              amountText: '¥ $monthTotal',
             ),
           ],
         ),
@@ -141,31 +246,59 @@ class HomeScreen extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ElevatedButton(
-          onPressed: () {
-            // TODO: ここに音声入力開始処理を実装していきます。
-          },
+          onPressed: _onMicPressed,
           style: ElevatedButton.styleFrom(
             shape: const CircleBorder(),
             padding: const EdgeInsets.all(24),
           ),
-          child: const Icon(
-            Icons.mic,
+          child: Icon(
+            _isListening ? Icons.mic : Icons.mic_none,
             size: 32,
           ),
         ),
         const SizedBox(height: 8),
-        const Text('タップして話す'),
+        Text(
+          _isListening ? '聞き取り中...' : 'タップして話す',
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _lastWords.isEmpty ? 'まだ何も認識されていません' : _lastWords,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: () {
+            const sampleText = 'テストで500円使った';
+            _saveExpenseFromText(sampleText);
+            setState(() {
+              _lastWords = sampleText;
+            });
+          },
+          child: const Text('テストで500円追加'),
+        ),
       ],
     );
   }
-
-  Widget _buildBody() {
+  
+  Widget _buildDebugStatus() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('speech available: $_isAvailable'),
+        Text('listening: $_isListening'),
+      ],
+    );
+  }
+  
+  Widget _buildBody(BuildContext context) {
     return Column(
       children: [
-        _buildSummaryCard(),
+        _buildSummaryCard(context),
         const Spacer(),
         _buildMicButton(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
+        _buildDebugStatus(),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -173,43 +306,36 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: _buildBody(),
-    );
-  }
-}
-
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
-
-  Text _buildMessage() {
-    return const Text(
-      'History: 支出の履歴一覧を\nここに実装していきます。',
-      textAlign: TextAlign.center,
+      child: _buildBody(context),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: _buildMessage(),
-    );
-  }
-}
-
-class AssetsScreen extends StatelessWidget {
-  const AssetsScreen({super.key});
-
-  Text _buildMessage() {
-    return const Text(
-      'Assets: 資産サマリー（銀行・PayPayなど）を\nここに実装していきます。',
-      textAlign: TextAlign.center,
-    );
+    int? _extractAmount(String text) {
+    final regex = RegExp(r'\d+');
+    final match = regex.firstMatch(text);
+    if (match == null) {
+      return null;
+    }
+    final value = int.tryParse(match.group(0)!);
+    return value;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: _buildMessage(),
+  void _saveExpenseFromText(String text) {
+    final amount = _extractAmount(text);
+    if (amount == null) {
+      return;
+    }
+
+    final expense = Expense.create(
+      amount: amount,
+      category: '音声入力',
+      memo: text,
     );
+
+    final provider = Provider.of<ExpenseProvider>(
+      context,
+      listen: false,
+    );
+    provider.addExpense(expense);
   }
 }

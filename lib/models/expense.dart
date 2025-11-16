@@ -1,33 +1,55 @@
+// lib/models/expense.dart
 import 'package:uuid/uuid.dart';
 
 class Expense {
-  final String id;
-  final int amount;
-  final DateTime dateTime;
-  final String category;
-  final String memo;
-
   Expense({
     required this.id,
     required this.amount,
-    required this.dateTime,
     required this.category,
-    required this.memo,
+    required this.createdAt,
+    this.memo,
   });
 
-  // 工場メソッド：新規作成時に自動でUUIDを生成
+  final String id;
+  final int amount;
+  final String category;
+  final DateTime createdAt;
+  final String? memo;
+
+  /// 画面から新規作成するとき用のファクトリ
   factory Expense.create({
     required int amount,
     required String category,
-    String memo = '',
+    String? memo,
   }) {
-    const uuid = Uuid();
     return Expense(
-      id: uuid.v4(),
+      id: const Uuid().v4(),
       amount: amount,
-      dateTime: DateTime.now(),
       category: category,
+      createdAt: DateTime.now(),
       memo: memo,
+    );
+  }
+
+  /// 永続化用 JSON 変換
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'category': category,
+      'memo': memo,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  /// JSON から復元
+  factory Expense.fromJson(Map<String, dynamic> json) {
+    return Expense(
+      id: json['id'] as String,
+      amount: json['amount'] as int,
+      category: json['category'] as String,
+      memo: json['memo'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 }
