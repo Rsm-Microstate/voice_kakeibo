@@ -379,8 +379,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int? _extractAmount(String text) {
+    final cleaned = text.replaceAll(RegExp(r'[,\s，]'), '');
     final regex = RegExp(r'\d+');
-    final match = regex.firstMatch(text);
+    final match = regex.firstMatch(cleaned);
     if (match != null) {
       return int.tryParse(match.group(0)!);
     }
