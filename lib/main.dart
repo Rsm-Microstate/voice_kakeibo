@@ -145,6 +145,52 @@ class _HomeScreenState extends State<HomeScreen> {
     return '${isNegative ? '-' : ''}¥$withCommas';
   }
 
+  String _detectCategory(String text) {
+    final lower = text.toLowerCase();
+    final Map<String, String> mapping = {
+      '食': '食費',
+      '飯': '食費',
+      'ランチ': '食費',
+      'ディナー': '食費',
+      '夕飯': '食費',
+      '昼ごはん': '食費',
+      '夜ごはん': '食費',
+      'ラーメン': '食費',
+      'カフェ': '食費',
+      'コーヒー': '食費',
+      '寿司': '食費',
+      'お菓子': '食費',
+      'コンビニ': '食費',
+
+      '友達': '交際費',
+      '飲み会': '交際費',
+      '飲み': '交際費',
+      'プレゼント': '交際費',
+      'デート': '交際費',
+
+      '電車': '交通費',
+      'バス': '交通費',
+      'タクシー': '交通費',
+      '交通': '交通費',
+
+      '服': '衣料品',
+      'シャツ': '衣料品',
+      'パンツ': '衣料品',
+      '靴': '衣料品',
+      'コート': '衣料品',
+
+      '雑費': '雑費',
+      '日用品': '雑費',
+    };
+
+    for (final entry in mapping.entries) {
+      if (text.contains(entry.key) || lower.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return '雑費';
+  }
+
 
   @override
   void initState() {
@@ -333,8 +379,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int? _extractAmount(String text) {
+    final cleaned = text.replaceAll(RegExp(r'[,\s，]'), '');
     final regex = RegExp(r'\d+');
-    final match = regex.firstMatch(text);
+    final match = regex.firstMatch(cleaned);
     if (match != null) {
       return int.tryParse(match.group(0)!);
     }
@@ -353,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final expense = Expense.create(
       amount: amount,
-      category: '音声入力',
+      category: _detectCategory(text),
       memo: text,
     );
 
