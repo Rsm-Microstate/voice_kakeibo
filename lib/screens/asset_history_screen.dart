@@ -218,18 +218,31 @@ class _LineChartPainter extends CustomPainter {
       ..color = const Color(0xFF4F46E5)
       ..style = PaintingStyle.fill;
 
+    final paintAxis = Paint()
+      ..color = Colors.grey.shade400
+      ..strokeWidth = 1.0;
+
     final values = history.map((e) => e.total.toDouble()).toList();
     final minVal = values.reduce((a, b) => a < b ? a : b);
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final span = (maxVal - minVal).abs() < 0.1 ? 1.0 : (maxVal - minVal);
 
-    final dx = history.length == 1 ? 0.0 : size.width / (history.length - 1);
+    // パディングを設けて軸とラベルスペースを確保
+    final paddingLeft = 44.0;
+    final paddingRight = 12.0;
+    final paddingTop = 12.0;
+    final paddingBottom = 28.0;
+    final plotWidth = (size.width - paddingLeft - paddingRight).clamp(0, size.width);
+    final plotHeight = (size.height - paddingTop - paddingBottom).clamp(0, size.height);
+    if (plotWidth <= 0 || plotHeight <= 0) return;
+
+    final dx = history.length == 1 ? 0.0 : plotWidth / (history.length - 1);
 
     final points = <Offset>[];
     for (var i = 0; i < values.length; i++) {
-      final x = dx * i;
+      final x = paddingLeft + dx * i;
       final norm = (values[i] - minVal) / span;
-      final y = size.height - norm * size.height;
+      final y = paddingTop + (1 - norm) * plotHeight;
       points.add(Offset(x, y));
     }
 
@@ -239,8 +252,8 @@ class _LineChartPainter extends CustomPainter {
     }
 
     final fillPath = Path.from(path)
-      ..lineTo(points.last.dx, size.height)
-      ..lineTo(points.first.dx, size.height)
+      ..lineTo(points.last.dx, paddingTop + plotHeight)
+      ..lineTo(points.first.dx, paddingTop + plotHeight)
       ..close();
 
     canvas.drawPath(fillPath, paintFill);
@@ -250,10 +263,23 @@ class _LineChartPainter extends CustomPainter {
       canvas.drawCircle(p, 4, paintPoint);
     }
 
+    // 軸線
+    final axisBottomY = paddingTop + plotHeight;
+    canvas.drawLine(
+      Offset(paddingLeft, paddingTop),
+      Offset(paddingLeft, axisBottomY),
+      paintAxis,
+    );
+    canvas.drawLine(
+      Offset(paddingLeft, axisBottomY),
+      Offset(paddingLeft + plotWidth, axisBottomY),
+      paintAxis,
+    );
+
     // 軸ラベル（簡易）
     final textStyle = TextStyle(color: Colors.grey.shade600, fontSize: 10);
-    final maxLabel = values.reduce((a, b) => a > b ? a : b).toInt();
-    final minLabel = values.reduce((a, b) => a < b ? a : b).toInt();
+    final maxLabel = maxVal.toInt();
+    final minLabel = minVal.toInt();
 
     final tpMax = TextPainter(
       text: TextSpan(text: maxLabel.toString(), style: textStyle),
@@ -264,8 +290,8 @@ class _LineChartPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    tpMax.paint(canvas, Offset(0, 0));
-    tpMin.paint(canvas, Offset(0, size.height - tpMin.height));
+    tpMax.paint(canvas, Offset(2, paddingTop));
+    tpMin.paint(canvas, Offset(2, paddingTop + plotHeight - tpMin.height));
 
     if (history.isNotEmpty) {
       final tpStart = TextPainter(
@@ -276,8 +302,11 @@ class _LineChartPainter extends CustomPainter {
         text: TextSpan(text: history.last.label, style: textStyle),
         textDirection: TextDirection.ltr,
       )..layout();
-      tpStart.paint(canvas, Offset(0, size.height + 4));
-      tpEnd.paint(canvas, Offset(size.width - tpEnd.width, size.height + 4));
+      tpStart.paint(canvas, Offset(paddingLeft, axisBottomY + 2));
+      tpEnd.paint(
+        canvas,
+        Offset(paddingLeft + plotWidth - tpEnd.width, axisBottomY + 2),
+      );
     }
   }
 
