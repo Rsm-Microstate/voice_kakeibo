@@ -124,6 +124,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isListening = false;
   String _lastWords = '';
 
+  String _detectAssetId(String text) {
+    final lower = text.toLowerCase();
+    if (text.contains('現金')) return 'cash';
+    if (text.contains('銀行') || text.contains('口座')) return 'bank';
+    if (text.contains('ポイント')) return 'points';
+    if (lower.contains('cash')) return 'cash';
+    if (lower.contains('bank')) return 'bank';
+    return 'cash';
+  }
+
+
   String _formatYen(int amount) {
     final isNegative = amount < 0;
     final absText = amount.abs().toString();
@@ -321,14 +332,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    int? _extractAmount(String text) {
+  int? _extractAmount(String text) {
     final regex = RegExp(r'\d+');
     final match = regex.firstMatch(text);
-    if (match == null) {
-      return null;
+    if (match != null) {
+      return int.tryParse(match.group(0)!);
     }
-    final value = int.tryParse(match.group(0)!);
-    return value;
+
+    if (text.contains('万')) return 10000;
+    if (text.contains('千')) return 1000;
+    if (text.contains('百')) return 100;
+    return null;
   }
 
   void _saveExpenseFromText(String text) {
@@ -343,10 +357,16 @@ class _HomeScreenState extends State<HomeScreen> {
       memo: text,
     );
 
-    final provider = Provider.of<ExpenseProvider>(
+    final expenseProvider = Provider.of<ExpenseProvider>(
       context,
       listen: false,
     );
-    provider.addExpense(expense);
+    final assetProvider = Provider.of<AssetProvider>(
+      context,
+      listen: false,
+    );
+    expenseProvider.addExpense(expense);
+    final assetId = _detectAssetId(text);
+    assetProvider.decreaseAsset(assetId, amount);
   }
 }
