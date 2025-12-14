@@ -37,8 +37,11 @@ class AssetProvider extends ChangeNotifier {
   int get totalAssets =>
       _assets.fold<int>(0, (sum, asset) => sum + asset.amount);
 
+  /// 日次の総資産推移
+  List<AssetSnapshot> get dailyHistory => List.unmodifiable(_dailyHistory);
+
   /// 月次の総資産推移
-  List<AssetSnapshot> get labellyHistory => List.unmodifiable(_history);
+  List<AssetSnapshot> get monthlyHistory => List.unmodifiable(_history);
 
   /// 金額の更新
   void updateAssetAmount(String id, int newAmount) {
