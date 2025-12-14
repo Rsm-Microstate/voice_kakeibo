@@ -64,6 +64,43 @@ class AssetHistoryScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showHistorySheet(
+    BuildContext context, {
+    required String title,
+    required List<AssetSnapshot> history,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _HistoryList(
+                history: history,
+                formatYen: _formatYen,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _SectionCard extends StatelessWidget {
