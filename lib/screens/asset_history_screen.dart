@@ -35,19 +35,27 @@ class AssetHistoryScreen extends StatelessWidget {
             children: [
               _SectionCard(
                 title: '日次推移',
-                child: _LineChart(history: dailyHistory),
-                footer: _HistoryList(
-                  history: dailyHistory,
-                  formatYen: _formatYen,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _showHistorySheet(
+                    context,
+                    title: '日次の詳細',
+                    history: dailyHistory,
+                  ),
+                  child: _LineChart(history: dailyHistory),
                 ),
               ),
               const SizedBox(height: 16),
               _SectionCard(
                 title: '月次推移',
-                child: _LineChart(history: monthlyHistory),
-                footer: _HistoryList(
-                  history: monthlyHistory,
-                  formatYen: _formatYen,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _showHistorySheet(
+                    context,
+                    title: '月次の詳細',
+                    history: monthlyHistory,
+                  ),
+                  child: _LineChart(history: monthlyHistory),
                 ),
               ),
             ],
@@ -62,13 +70,10 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.child,
-    required this.footer,
   });
 
   final String title;
   final Widget child;
-  final Widget footer;
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -91,8 +96,8 @@ class _SectionCard extends StatelessWidget {
               height: 180,
               child: child,
             ),
-            const SizedBox(height: 12),
-            footer,
+            const SizedBox(height: 4),
+            const Text("タップで詳細を見る", style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
