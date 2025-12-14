@@ -318,11 +318,12 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: _onMicPressed,
           style: ElevatedButton.styleFrom(
             shape: const CircleBorder(),
-            padding: const EdgeInsets.all(32),
+            minimumSize: const Size(140, 140),
+            padding: EdgeInsets.zero,
           ),
           child: Icon(
             _isListening ? Icons.mic : Icons.mic_none,
-            size: 40,
+            size: 64,
           ),
         ),
         const SizedBox(height: 8),
