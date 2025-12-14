@@ -24,4 +24,15 @@ class AssetProvider extends ChangeNotifier {
     _assets[index] = _assets[index].copyWith(amount: newAmount);
     notifyListeners();
   }
+  
+  /// 指定アセットから支出分を減算する（下回る場合は0まで）
+  void decreaseAsset(String id, int amount) {
+    final index = _assets.indexWhere((asset) => asset.id == id);
+    if (index == -1) return;
+
+    final current = _assets[index].amount;
+    final next = current - amount;
+    _assets[index] = _assets[index].copyWith(amount: next < 0 ? 0 : next);
+    notifyListeners();
+  }
 }
