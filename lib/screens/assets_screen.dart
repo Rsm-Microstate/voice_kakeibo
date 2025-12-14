@@ -40,10 +40,14 @@ class AssetsScreen extends StatelessWidget {
                   _TotalAssetsCard(
                     total: total,
                     onTap: () {
-                      final history = assetProvider.monthlyHistory;
+                      final daily = assetProvider.dailyHistory;
+                      final monthly = assetProvider.monthlyHistory;
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => AssetHistoryScreen(history: history),
+                          builder: (_) => AssetHistoryScreen(
+                            dailyHistory: daily,
+                            monthlyHistory: monthly,
+                          ),
                         ),
                       );
                     },

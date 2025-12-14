@@ -9,14 +9,25 @@ class AssetProvider extends ChangeNotifier {
     const Asset(id: 'points', name: 'ポイント', amount: 2000),
   ];
 
+  final List<AssetSnapshot> _dailyHistory = const [
+    AssetSnapshot(label: '12/01', total: 165000),
+    AssetSnapshot(label: '12/02', total: 164200),
+    AssetSnapshot(label: '12/03', total: 163800),
+    AssetSnapshot(label: '12/04', total: 164500),
+    AssetSnapshot(label: '12/05', total: 163400),
+    AssetSnapshot(label: '12/06', total: 162900),
+    AssetSnapshot(label: '12/07', total: 162000),
+  ];
+
+
   final List<AssetSnapshot> _history = const [
-    AssetSnapshot(month: '6月', total: 180000),
-    AssetSnapshot(month: '7月', total: 182000),
-    AssetSnapshot(month: '8月', total: 176500),
-    AssetSnapshot(month: '9月', total: 174000),
-    AssetSnapshot(month: '10月', total: 168000),
-    AssetSnapshot(month: '11月', total: 165000),
-    AssetSnapshot(month: '12月', total: 162000),
+    AssetSnapshot(label: '6月', total: 180000),
+    AssetSnapshot(label: '7月', total: 182000),
+    AssetSnapshot(label: '8月', total: 176500),
+    AssetSnapshot(label: '9月', total: 174000),
+    AssetSnapshot(label: '10月', total: 168000),
+    AssetSnapshot(label: '11月', total: 165000),
+    AssetSnapshot(label: '12月', total: 162000),
   ];
 
   /// 一覧取得（外側からは読み取り専用）
@@ -27,7 +38,7 @@ class AssetProvider extends ChangeNotifier {
       _assets.fold<int>(0, (sum, asset) => sum + asset.amount);
 
   /// 月次の総資産推移
-  List<AssetSnapshot> get monthlyHistory => List.unmodifiable(_history);
+  List<AssetSnapshot> get labellyHistory => List.unmodifiable(_history);
 
   /// 金額の更新
   void updateAssetAmount(String id, int newAmount) {
@@ -51,11 +62,11 @@ class AssetProvider extends ChangeNotifier {
 }
 
 class AssetSnapshot {
-  final String month;
+  final String label;
   final int total;
 
   const AssetSnapshot({
-    required this.month,
+    required this.label,
     required this.total,
   });
 }

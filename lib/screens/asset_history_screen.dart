@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import '../providers/asset_provider.dart';
 
 class AssetHistoryScreen extends StatelessWidget {
-  const AssetHistoryScreen({super.key, required this.history});
+  const AssetHistoryScreen({
+    super.key,
+    required this.dailyHistory,
+    required this.monthlyHistory,
+  });
 
-  final List<AssetSnapshot> history;
+  final List<AssetSnapshot> dailyHistory;
+  final List<AssetSnapshot> monthlyHistory;
 
   String _formatYen(int amount) {
     final isNegative = amount < 0;
@@ -27,41 +32,100 @@ class AssetHistoryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 220,
-              child: Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: _LineChart(history: history),
-                ),
+            _SectionCard(
+              title: '日次推移',
+              child: _LineChart(history: dailyHistory),
+              footer: _HistoryList(
+                history: dailyHistory,
+                formatYen: _formatYen,
               ),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: ListView.separated(
-                itemCount: history.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = history[index];
-                  return ListTile(
-                    title: Text(item.month),
-                    trailing: Text(
-                      _formatYen(item.total),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  );
-                },
+            _SectionCard(
+              title: '月次推移',
+              child: _LineChart(history: monthlyHistory),
+              footer: _HistoryList(
+                history: monthlyHistory,
+                formatYen: _formatYen,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    required this.footer,
+  });
+
+  final String title;
+  final Widget child;
+  final Widget footer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 180,
+              child: child,
+            ),
+            const SizedBox(height: 12),
+            footer,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryList extends StatelessWidget {
+  const _HistoryList({
+    required this.history,
+    required this.formatYen,
+  });
+
+  final List<AssetSnapshot> history;
+  final String Function(int) formatYen;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: history.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final item = history[index];
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          title: Text(item.label),
+          trailing: Text(
+            formatYen(item.total),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        );
+      },
     );
   }
 }
