@@ -124,6 +124,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isListening = false;
   String _lastWords = '';
 
+  String _formatYen(int amount) {
+    final isNegative = amount < 0;
+    final absText = amount.abs().toString();
+    final withCommas = absText.replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]},',
+    );
+    return '${isNegative ? '-' : ''}¥$withCommas';
+  }
+
+
   @override
   void initState() {
     super.initState();
@@ -228,12 +239,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildSummaryRow(
               label: '今日の支出',
-              amountText: '¥ $todayTotal',
+              amountText: _formatYen(todayTotal),
             ),
             const SizedBox(height: 12),
             _buildSummaryRow(
               label: '今月の支出',
-              amountText: '¥ $monthTotal',
+              amountText: _formatYen(monthTotal),
             ),
           ],
         ),
