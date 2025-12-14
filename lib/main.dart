@@ -74,7 +74,8 @@ class _RootScreenState extends State<RootScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text('Voice Kakeibo'),
+      automaticallyImplyLeading: false,
+      title: _currentIndex == 0 ? const Text('Voice Kakeibo') : null,
     );
   }
 

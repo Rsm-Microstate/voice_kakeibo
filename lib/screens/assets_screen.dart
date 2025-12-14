@@ -24,18 +24,6 @@ class AssetsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'Voice Kakeibo',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   // 総資産カード（タップで推移グラフへ）
                   _TotalAssetsCard(
                     total: total,
