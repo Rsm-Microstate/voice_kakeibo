@@ -90,9 +90,13 @@ class AssetHistoryScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _HistoryList(
-                history: history,
-                formatYen: _formatYen,
+              SizedBox(
+                height: 320,
+                child: _HistoryList(
+                  history: history,
+                  formatYen: _formatYen,
+                  physics: const BouncingScrollPhysics(),
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -146,16 +150,18 @@ class _HistoryList extends StatelessWidget {
   const _HistoryList({
     required this.history,
     required this.formatYen,
+    this.physics,
   });
 
   final List<AssetSnapshot> history;
   final String Function(int) formatYen;
+  final ScrollPhysics? physics;
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: physics ?? const NeverScrollableScrollPhysics(),
       itemCount: history.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
@@ -242,6 +248,36 @@ class _LineChartPainter extends CustomPainter {
 
     for (final p in points) {
       canvas.drawCircle(p, 4, paintPoint);
+    }
+
+    // 軸ラベル（簡易）
+    final textStyle = TextStyle(color: Colors.grey.shade600, fontSize: 10);
+    final maxLabel = values.reduce((a, b) => a > b ? a : b).toInt();
+    final minLabel = values.reduce((a, b) => a < b ? a : b).toInt();
+
+    final tpMax = TextPainter(
+      text: TextSpan(text: maxLabel.toString(), style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final tpMin = TextPainter(
+      text: TextSpan(text: minLabel.toString(), style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    tpMax.paint(canvas, Offset(0, 0));
+    tpMin.paint(canvas, Offset(0, size.height - tpMin.height));
+
+    if (history.isNotEmpty) {
+      final tpStart = TextPainter(
+        text: TextSpan(text: history.first.label, style: textStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final tpEnd = TextPainter(
+        text: TextSpan(text: history.last.label, style: textStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tpStart.paint(canvas, Offset(0, size.height + 4));
+      tpEnd.paint(canvas, Offset(size.width - tpEnd.width, size.height + 4));
     }
   }
 
