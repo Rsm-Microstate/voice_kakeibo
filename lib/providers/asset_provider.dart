@@ -9,12 +9,25 @@ class AssetProvider extends ChangeNotifier {
     const Asset(id: 'points', name: 'ポイント', amount: 2000),
   ];
 
+  final List<AssetSnapshot> _history = const [
+    AssetSnapshot(month: '6月', total: 180000),
+    AssetSnapshot(month: '7月', total: 182000),
+    AssetSnapshot(month: '8月', total: 176500),
+    AssetSnapshot(month: '9月', total: 174000),
+    AssetSnapshot(month: '10月', total: 168000),
+    AssetSnapshot(month: '11月', total: 165000),
+    AssetSnapshot(month: '12月', total: 162000),
+  ];
+
   /// 一覧取得（外側からは読み取り専用）
   List<Asset> get assets => List.unmodifiable(_assets);
 
   /// 総資産額
   int get totalAssets =>
       _assets.fold<int>(0, (sum, asset) => sum + asset.amount);
+
+  /// 月次の総資産推移
+  List<AssetSnapshot> get monthlyHistory => List.unmodifiable(_history);
 
   /// 金額の更新
   void updateAssetAmount(String id, int newAmount) {
@@ -35,4 +48,14 @@ class AssetProvider extends ChangeNotifier {
     _assets[index] = _assets[index].copyWith(amount: next < 0 ? 0 : next);
     notifyListeners();
   }
+}
+
+class AssetSnapshot {
+  final String month;
+  final int total;
+
+  const AssetSnapshot({
+    required this.month,
+    required this.total,
+  });
 }

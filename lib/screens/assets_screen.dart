@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/asset.dart';
 import '../providers/asset_provider.dart';
+import 'asset_history_screen.dart';
 
 class AssetsScreen extends StatelessWidget {
   const AssetsScreen({super.key});
@@ -35,8 +36,18 @@ class AssetsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // 総資産カード
-                  _TotalAssetsCard(total: total),
+                  // 総資産カード（タップで推移グラフへ）
+                  _TotalAssetsCard(
+                    total: total,
+                    onTap: () {
+                      final history = assetProvider.monthlyHistory;
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AssetHistoryScreen(history: history),
+                        ),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: 16),
 
@@ -114,33 +125,41 @@ class AssetsScreen extends StatelessWidget {
 
 /// 総資産カード
 class _TotalAssetsCard extends StatelessWidget {
-  const _TotalAssetsCard({required this.total});
+  const _TotalAssetsCard({
+    required this.total,
+    required this.onTap,
+  });
 
   final int total;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '総資産',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '¥ $total',
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '総資産',
+                style: TextStyle(fontSize: 16),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                '¥ $total',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
