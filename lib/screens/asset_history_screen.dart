@@ -29,27 +29,29 @@ class AssetHistoryScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionCard(
-              title: '日次推移',
-              child: _LineChart(history: dailyHistory),
-              footer: _HistoryList(
-                history: dailyHistory,
-                formatYen: _formatYen,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionCard(
+                title: '日次推移',
+                child: _LineChart(history: dailyHistory),
+                footer: _HistoryList(
+                  history: dailyHistory,
+                  formatYen: _formatYen,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _SectionCard(
-              title: '月次推移',
-              child: _LineChart(history: monthlyHistory),
-              footer: _HistoryList(
-                history: monthlyHistory,
-                formatYen: _formatYen,
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: '月次推移',
+                child: _LineChart(history: monthlyHistory),
+                footer: _HistoryList(
+                  history: monthlyHistory,
+                  formatYen: _formatYen,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
