@@ -74,7 +74,8 @@ class _RootScreenState extends State<RootScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text('Voice Kakeibo'),
+      automaticallyImplyLeading: false,
+      title: _currentIndex == 0 ? const Text('Voice Kakeibo') : null,
     );
   }
 
@@ -102,7 +103,7 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: _currentIndex == 0 ? _buildAppBar() : null,
       body: _buildBody(),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -317,43 +318,24 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: _onMicPressed,
           style: ElevatedButton.styleFrom(
             shape: const CircleBorder(),
-            padding: const EdgeInsets.all(24),
+            minimumSize: const Size(140, 140),
+            padding: EdgeInsets.zero,
           ),
           child: Icon(
             _isListening ? Icons.mic : Icons.mic_none,
-            size: 32,
+            size: 64,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           _isListening ? '聞き取り中...' : 'タップして話す',
         ),
-        const SizedBox(height: 8),
-        Text(
-          _lastWords.isEmpty ? 'まだ何も認識されていません' : _lastWords,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        OutlinedButton(
-          onPressed: () {
-            const sampleText = 'テストで500円使った';
-            _saveExpenseFromText(sampleText);
-            setState(() {
-              _lastWords = sampleText;
-            });
-          },
-          child: const Text('テストで500円追加'),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildDebugStatus() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('speech available: $_isAvailable'),
-        Text('listening: $_isListening'),
+        const SizedBox(height: 12),
+        if (_lastWords.isNotEmpty)
+          Text(
+            _lastWords,
+            textAlign: TextAlign.center,
+          ),
       ],
     );
   }
@@ -364,9 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _buildSummaryCard(context),
         const Spacer(),
         _buildMicButton(),
-        const SizedBox(height: 16),
-        _buildDebugStatus(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
       ],
     );
   }
