@@ -174,15 +174,24 @@ class HistoryScreen extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: TabBar(
-          labelColor: Colors.indigo,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.indigo,
-          tabs: const [
-            Tab(text: '日'),
-            Tab(text: '週'),
-            Tab(text: '月'),
-          ],
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(52),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: TabBar(
+                labelColor: Colors.indigo,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.indigo,
+                tabs: const [
+                  Tab(text: '日'),
+                  Tab(text: '週'),
+                  Tab(text: '月'),
+                ],
+              ),
+            ),
+          ),
         ),
         body: TabBarView(
           children: [
